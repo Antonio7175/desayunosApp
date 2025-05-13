@@ -1,8 +1,0 @@
-services:
-  - type: web
-    name: desayunitos-backend
-    runtime: java
-    buildCommand: ./mvnw clean install
-    startCommand: java -jar target/desayunitos-0.0.1-SNAPSHOT.jar
-    branch: main
-    plan: free
