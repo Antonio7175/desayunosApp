@@ -61,7 +61,11 @@ public class SecurityConfig {
     @Bean
     public CorsFilter corsFilter() {
         CorsConfiguration corsConfiguration = new CorsConfiguration();
-        corsConfiguration.setAllowedOrigins(List.of("http://localhost:3000")); // Permite el frontend
+        corsConfiguration.setAllowedOrigins(List.of(
+        	    "http://localhost:3000", 
+        	    "https://desayunitos.up.railway.app"
+        	));
+
         corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         corsConfiguration.setAllowedHeaders(List.of("Authorization", "Cache-Control", "Content-Type"));
         corsConfiguration.setAllowCredentials(true);
