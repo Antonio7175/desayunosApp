@@ -1,14 +1,11 @@
-# Usa una imagen oficial de Java 17 optimizada
+# Etapa 1: Build con Maven
+FROM maven:3.9.5-eclipse-temurin-17-alpine AS build
+WORKDIR /app
+COPY . .
+RUN mvn clean package -DskipTests
+
+# Etapa 2: Runtime con Java
 FROM eclipse-temurin:17-jdk-alpine
-
-# Crea un directorio temporal
-VOLUME /tmp
-
-# Define la ruta del JAR generado por Maven
-ARG JAR_FILE=target/*.jar
-
-# Copia el JAR al contenedor y lo renombra como app.jar
-COPY ${JAR_FILE} app.jar
-
-# Comando para ejecutar la app
-ENTRYPOINT ["java", "-jar", "/app.jar"]
+WORKDIR /app
+COPY --from=build /app/target/*.jar app.jar
+ENTRYPOINT ["java", "-jar", "app.jar"]
