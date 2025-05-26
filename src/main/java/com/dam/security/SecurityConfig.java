@@ -8,6 +8,8 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -21,21 +23,23 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtRequestFilter jwtRequestFilter;
-    private final UsuarioService usuarioService;
-
-    public SecurityConfig(JwtRequestFilter jwtRequestFilter, UsuarioService usuarioService) {
-        this.jwtRequestFilter = jwtRequestFilter;
-        this.usuarioService = usuarioService;
-    }
+    
+    public SecurityConfig(JwtRequestFilter jwtRequestFilter) {
+    	     this.jwtRequestFilter = jwtRequestFilter;
+    	 }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.cors().and().csrf().disable()
             .authorizeHttpRequests(authorize -> authorize
                 .requestMatchers("/api/usuarios/login", "/api/usuarios/register").permitAll() // Permitir login y registro
+                .requestMatchers("/uploads/**").permitAll()
                 .requestMatchers("/api/usuarios/me").authenticated() // Solo autenticados pueden acceder
+                .requestMatchers(HttpMethod.GET, "/api/bares/{barId}/menu").permitAll()
                 .requestMatchers("/api/bares/**").hasAnyRole("USER", "ADMIN") // Permitir a USER y ADMIN
-                .requestMatchers("/api/bares/{barId}/menu").hasAnyRole("ADMIN", "USER")
+                .requestMatchers(HttpMethod.GET, "/api/comandas/**").permitAll() // Ver comandas sin login
+                .requestMatchers(HttpMethod.POST, "/api/comandas/*/agregar-item").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/comandas").hasAnyRole("USER", "ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/bares/**").hasAnyRole("USER", "ADMIN") // Lectura permitida
                 .requestMatchers(HttpMethod.PUT, "/api/bares/**").hasAnyRole("ADMIN", "OWNER") 
                 .requestMatchers(HttpMethod.POST, "/api/bares/**").hasRole("ADMIN") // Creación solo para ADMIN

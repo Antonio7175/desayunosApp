@@ -5,14 +5,17 @@ import com.dam.entity.Usuario;
 import com.dam.repository.UsuarioRepository;
 import com.dam.security.JwtTokenUtil;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -20,10 +23,13 @@ public class UsuarioService implements UserDetailsService {
 
     private final UsuarioRepository usuarioRepository;
     private final JwtTokenUtil jwtTokenUtil;
+    private PasswordEncoder passwordEncoder;
 
-    public UsuarioService(UsuarioRepository usuarioRepository, JwtTokenUtil jwtTokenUtil) {
+    @Autowired
+    public UsuarioService(UsuarioRepository usuarioRepository, JwtTokenUtil jwtTokenUtil, PasswordEncoder passwordEncoder) {
         this.usuarioRepository = usuarioRepository;
         this.jwtTokenUtil = jwtTokenUtil;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -56,10 +62,9 @@ public class UsuarioService implements UserDetailsService {
             throw new IllegalArgumentException("El email ya está registrado.");
         }
 
-        // Codificar la contraseña antes de guardar (recomendado)
-        // Por simplicidad aquí se guarda tal cual, pero es preferible usar:
-        // String encodedPassword = passwordEncoder.encode(usuario.getPassword());
-        // usuario.setPassword(encodedPassword);
+        // ✅ Codificar la contraseña
+        String encodedPassword = passwordEncoder.encode(usuario.getPassword());
+        usuario.setPassword(encodedPassword);
 
         usuarioRepository.save(usuario);
     }
@@ -78,14 +83,19 @@ public class UsuarioService implements UserDetailsService {
         System.out.println("🔑 Contraseña en DB: " + usuario.getPassword());
         System.out.println("🔑 Contraseña ingresada: " + password);
 
-        if (!usuario.getPassword().equals(password)) {
+        if (!passwordEncoder.matches(password, usuario.getPassword())) {
             System.out.println("❌ Las contraseñas NO coinciden.");
             throw new IllegalArgumentException("Contraseña incorrecta.");
         }
 
+        if (usuario.getRol() == null) {
+            throw new IllegalStateException("El usuario no tiene un rol asignado.");
+        }
+
         System.out.println("🎉 Autenticación exitosa para: " + usuario.getEmail());
-        return jwtTokenUtil.generateToken(email);
+        return jwtTokenUtil.generateToken(email, usuario.getRol().name());
     }
+
     
     public Usuario findById(Long id) { // ⬅️ Nuevo método para buscar por ID
         return usuarioRepository.findById(id).orElse(null);
@@ -94,5 +104,8 @@ public class UsuarioService implements UserDetailsService {
     public Usuario save(Usuario usuario) { // ⬅️ Nuevo método para guardar cambios
         return usuarioRepository.save(usuario);
     }
+    
+    
+    
 
 }

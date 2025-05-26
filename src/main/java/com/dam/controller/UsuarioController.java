@@ -34,6 +34,7 @@ public class UsuarioController {
         return ResponseEntity.ok("Usuario registrado");
     }
     
+    
     @GetMapping("/me")
     public ResponseEntity<?> getUsuarioAutenticado() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

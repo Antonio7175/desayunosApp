@@ -1,68 +1,72 @@
 package com.dam.security;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-
-import com.dam.service.UsuarioService;
-
-import io.jsonwebtoken.io.IOException;
+import com.dam.security.JwtTokenUtil;
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.Collections;
 
 @Component
 public class JwtRequestFilter extends OncePerRequestFilter {
-    private final UsuarioService usuarioService;
+
     private final JwtTokenUtil jwtTokenUtil;
-    public JwtRequestFilter(UsuarioService usuarioService, JwtTokenUtil jwtTokenUtil) {
-        this.usuarioService = usuarioService;
+
+    public JwtRequestFilter(JwtTokenUtil jwtTokenUtil) {
         this.jwtTokenUtil = jwtTokenUtil;
     }
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
-            throws ServletException, IOException, java.io.IOException {
+            throws ServletException, IOException {
+
+        String path = request.getRequestURI();
+
+        // ⛔ Salta validación JWT si la ruta es pública
+        if (path.equals("/api/usuarios/login") ||
+            path.equals("/api/usuarios/register")) {
+            chain.doFilter(request, response);
+            return;
+        }
+
         final String authHeader = request.getHeader("Authorization");
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            System.out.println("⚠️ No se recibió token en la cabecera Authorization.");
             chain.doFilter(request, response);
             return;
         }
 
         String jwt = authHeader.substring(7);
 
-        // Evitar errores si el token está vacío
-        if (jwt.trim().isEmpty()) {
-            System.out.println("⚠️ Token vacío, se ignora la autenticación.");
-            chain.doFilter(request, response);
-            return;
-        }
-
-        System.out.println("🔹 Token recibido en filtro: " + jwt);
-
         try {
-            String username = jwtTokenUtil.extractUsername(jwt);
-            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                UserDetails userDetails = usuarioService.loadUserByUsername(username);
-                if (jwtTokenUtil.validateToken(jwt)) {
-                    System.out.println("✅ Token válido para usuario: " + username);
-                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                            userDetails, null, userDetails.getAuthorities());
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
-                } else {
-                    System.out.println("❌ Token inválido.");
-                }
+            if (jwt.trim().isEmpty()) {
+                chain.doFilter(request, response);
+                return;
             }
+
+            Claims claims = jwtTokenUtil.extractAllClaims(jwt);
+            String username = claims.getSubject(); // normalmente el email
+            String role = claims.get("role", String.class);
+
+            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + role.toUpperCase());
+                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                        username, null, Collections.singletonList(authority));
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            }
+
         } catch (Exception e) {
             System.out.println("❌ Error al procesar el token: " + e.getMessage());
         }
 
         chain.doFilter(request, response);
     }
-
 
 }
