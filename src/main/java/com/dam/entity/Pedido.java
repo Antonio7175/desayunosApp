@@ -1,5 +1,6 @@
 package com.dam.entity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -29,6 +30,18 @@ public class Pedido {
 
     @Enumerated(EnumType.STRING)
     private EstadoPedido estado;
+    
+    @Column(nullable = false)
+    private boolean canceladoPorAdmin = false;
+
+
+	public boolean isCanceladoPorAdmin() {
+		return canceladoPorAdmin;
+	}
+
+	public void setCanceladoPorAdmin(boolean canceladoPorAdmin) {
+		this.canceladoPorAdmin = canceladoPorAdmin;
+	}
 
 	public Long getId() {
 		return id;

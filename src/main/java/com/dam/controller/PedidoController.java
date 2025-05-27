@@ -74,4 +74,28 @@ public class PedidoController {
 		pedidoService.acceptPedido(pedidoId);
 		return ResponseEntity.ok("Pedido aceptado");
 	}
+	
+	@PutMapping("/{pedidoId}/rechazar")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<?> rechazarPedidoComoAdmin(@PathVariable Long pedidoId) {
+	    try {
+	        pedidoService.rechazarPedidoComoAdmin(pedidoId);
+	        return ResponseEntity.ok("Pedido rechazado correctamente");
+	    } catch (Exception e) {
+	        return ResponseEntity.badRequest().body("Error: " + e.getMessage());
+	    }
+	}
+	
+	@DeleteMapping("/eliminar-todos")
+	public ResponseEntity<String> eliminarPedidosUsuario(Authentication authentication) {
+	    Usuario usuario = usuarioService.findByEmail(authentication.getName());
+	    if (usuario == null) {
+	        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Usuario no autenticado");
+	    }
+
+	    pedidoService.eliminarPedidosDeUsuario(usuario);
+	    return ResponseEntity.ok("Historial de pedidos eliminado correctamente.");
+	}
+
+
 }

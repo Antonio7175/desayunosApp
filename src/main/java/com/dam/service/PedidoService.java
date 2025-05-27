@@ -67,10 +67,35 @@ public class PedidoService {
             Pedido pedido = pedidoOpt.get();
             if (pedido.getUsuario().equals(usuario) && pedido.getEstado() == EstadoPedido.PENDIENTE) {
                 pedido.setEstado(EstadoPedido.CANCELADO);
+                pedido.setCanceladoPorAdmin(false); // ⬅️ MUY IMPORTANTE
                 pedidoRepository.save(pedido);
                 return true;
             }
         }
         return false;
     }
+    public void rechazarPedidoComoAdmin(Long pedidoId) {
+        Pedido pedido = pedidoRepository.findById(pedidoId)
+                .orElseThrow(() -> new RuntimeException("Pedido no encontrado"));
+
+        if (pedido.getEstado() == EstadoPedido.PENDIENTE) {
+            pedido.setEstado(EstadoPedido.CANCELADO);
+            pedido.setCanceladoPorAdmin(true); // ⬅️ IMPORTANTE
+            pedidoRepository.save(pedido);
+        } else {
+            throw new IllegalStateException("El pedido no está en estado PENDIENTE.");
+        }
+    }
+    
+    
+    public void eliminarPedidosDeUsuario(Usuario usuario) {
+        List<Pedido> pedidos = pedidoRepository.findByUsuario(usuario);
+
+        pedidos.stream()
+            .filter(p -> p.getEstado() == EstadoPedido.CANCELADO || p.getEstado() == EstadoPedido.ACEPTADO)
+            .forEach(pedidoRepository::delete);
+    }
+
+
+
 }
