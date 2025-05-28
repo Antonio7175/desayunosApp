@@ -8,6 +8,7 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -83,7 +84,6 @@ public class ComandaController {
         return ResponseEntity.ok(comanda);
     }
 
-    // Ver comanda por código (público)
     @GetMapping("/{codigo}")
     public ResponseEntity<?> verComandaCompleta(@PathVariable String codigo) {
         List<ComandaItem> items = itemRepo.findByComandaCodigoUnico(codigo);
@@ -92,6 +92,12 @@ public class ComandaController {
         }
 
         Comanda comanda = items.get(0).getComanda();
+
+        // ✅ Bloquear acceso si está cancelada
+        if (comanda.getEstado() == EstadoComanda.CANCELADA) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Esta comanda ha sido cancelada.");
+        }
+
         return ResponseEntity.ok(new ComandaConItemsDTO(comanda, items));
     }
 
@@ -216,6 +222,23 @@ public class ComandaController {
         comandaRepo.save(comanda);
         return ResponseEntity.ok("Comanda cancelada correctamente.");
     }
+    
+    @DeleteMapping("/{comandaId}/item/{itemId}")
+    public ResponseEntity<?> eliminarItem(@PathVariable Long comandaId,
+                                          @PathVariable Long itemId,
+                                          @RequestHeader("Authorization") String authHeader) {
+        String token = authHeader.replace("Bearer ", "");
+        String email = jwtTokenUtil.extractUsername(token);
+
+        Comanda comanda = comandaRepo.findById(comandaId).orElseThrow();
+        if (!comanda.getAdmin().getEmail().equals(email)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        itemRepo.deleteById(itemId);
+        return ResponseEntity.ok("Item eliminado");
+    }
+
 
     
 }
