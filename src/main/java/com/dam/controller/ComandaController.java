@@ -200,5 +200,23 @@ public class ComandaController {
         comandaRepo.save(comanda);
         return ResponseEntity.ok("Comanda cerrada");
     }
+    
+    @PutMapping("/{comandaId}/cancelar")
+    public ResponseEntity<?> cancelarComanda(@PathVariable Long comandaId,
+                                             @RequestHeader("Authorization") String authHeader) {
+        String token = authHeader.replace("Bearer ", "");
+        String email = jwtTokenUtil.extractUsername(token);
+        Comanda comanda = comandaRepo.findById(comandaId).orElseThrow();
+
+        if (!comanda.getAdmin().getEmail().equalsIgnoreCase(email)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("No eres el administrador");
+        }
+
+        comanda.setEstado(EstadoComanda.CANCELADA);
+        comandaRepo.save(comanda);
+        return ResponseEntity.ok("Comanda cancelada correctamente.");
+    }
+
+    
 }
 
