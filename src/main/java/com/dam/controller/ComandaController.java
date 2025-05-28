@@ -212,17 +212,23 @@ public class ComandaController {
                                              @RequestHeader("Authorization") String authHeader) {
         String token = authHeader.replace("Bearer ", "");
         String email = jwtTokenUtil.extractUsername(token);
+
         Comanda comanda = comandaRepo.findById(comandaId).orElseThrow();
 
-        if (!comanda.getAdmin().getEmail().equalsIgnoreCase(email)) {
+        // DEBUGGING
+        System.out.println("TOKEN EMAIL: " + email);
+        System.out.println("ADMIN EMAIL: " + comanda.getAdmin().getEmail());
+
+        if (!comanda.getAdmin().getEmail().equalsIgnoreCase(email.trim())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("No eres el administrador");
         }
 
         comanda.setEstado(EstadoComanda.CANCELADA);
         comandaRepo.save(comanda);
+
         return ResponseEntity.ok("Comanda cancelada correctamente.");
     }
-    
+
     @DeleteMapping("/{comandaId}/item/{itemId}")
     public ResponseEntity<?> eliminarItem(@PathVariable Long comandaId,
                                           @PathVariable Long itemId,
