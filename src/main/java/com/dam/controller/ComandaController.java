@@ -212,22 +212,13 @@ public class ComandaController {
     @PutMapping("/{comandaId}/cancelar")
     public ResponseEntity<?> cancelarComanda(@PathVariable Long comandaId) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-
-        if (auth == null || !auth.isAuthenticated()) {
-            System.out.println("❌ No autenticado");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No autenticado");
-        }
-
-        String email = auth.getName(); // extraído del filtro JWT
+        String email = auth.getName(); // viene del token
 
         Comanda comanda = comandaRepo.findById(comandaId).orElseThrow();
 
-        System.out.println("🔍 Email del token: " + email);
-        System.out.println("🔍 Email del admin: " + comanda.getAdmin().getEmail());
-
-        if (!comanda.getAdmin().getEmail().equalsIgnoreCase(email)) {
-            System.out.println("❌ No eres el administrador");
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("No eres el administrador");
+        // ✅ Permitir si el usuario autenticado es el creador de la comanda
+        if (!email.equalsIgnoreCase(comanda.getAdmin().getEmail())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("No estás autorizado para cancelar esta comanda.");
         }
 
         comanda.setEstado(EstadoComanda.CANCELADA);
