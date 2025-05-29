@@ -8,6 +8,8 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -208,18 +210,18 @@ public class ComandaController {
     }
     
     @PutMapping("/{comandaId}/cancelar")
-    public ResponseEntity<?> cancelarComanda(@PathVariable Long comandaId,
-                                             @RequestHeader("Authorization") String authHeader) {
-        String token = authHeader.replace("Bearer ", "");
-        String email = jwtTokenUtil.extractUsername(token);
+    public ResponseEntity<?> cancelarComanda(@PathVariable Long comandaId) {
+        // ✅ Usa el contexto de seguridad
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName(); // Extraído del JWT de forma segura
 
         Comanda comanda = comandaRepo.findById(comandaId).orElseThrow();
 
-        // DEBUGGING
-        System.out.println("TOKEN EMAIL: " + email);
-        System.out.println("ADMIN EMAIL: " + comanda.getAdmin().getEmail());
+        // 🔍 Logs opcionales de depuración
+        System.out.println("🔍 Email del SecurityContext: " + email);
+        System.out.println("🔍 Email del admin: " + comanda.getAdmin().getEmail());
 
-        if (!comanda.getAdmin().getEmail().equalsIgnoreCase(email.trim())) {
+        if (!comanda.getAdmin().getEmail().equalsIgnoreCase(email)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("No eres el administrador");
         }
 
@@ -228,6 +230,7 @@ public class ComandaController {
 
         return ResponseEntity.ok("Comanda cancelada correctamente.");
     }
+
 
     @DeleteMapping("/{comandaId}/item/{itemId}")
     public ResponseEntity<?> eliminarItem(@PathVariable Long comandaId,
