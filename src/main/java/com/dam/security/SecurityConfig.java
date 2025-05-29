@@ -48,7 +48,7 @@ public class SecurityConfig {
                 .requestMatchers("/uploads/**").permitAll()
                 .requestMatchers("/api/pedidos/**").hasAnyRole("USER", "ADMIN") // Pedidos accesibles a USER y ADMIN
                 .requestMatchers(HttpMethod.PUT, "/api/comandas/*/cancelar").hasAnyRole("USER", "ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/api/comandas/item/*").hasAnyRole("USER", "ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/comandas/item/*").permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class)
