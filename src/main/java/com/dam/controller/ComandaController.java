@@ -95,13 +95,15 @@ public class ComandaController {
 
         Comanda comanda = items.get(0).getComanda();
 
-        // ✅ Bloquear acceso si está cancelada
-        if (comanda.getEstado() == EstadoComanda.CANCELADA) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Esta comanda ha sido cancelada.");
+        // 🚫 Bloquear si ya no está activa
+        if (comanda.getEstado() == EstadoComanda.CANCELADA ||
+            comanda.getEstado() == EstadoComanda.ENVIADA) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Esta comanda ya no está disponible.");
         }
 
         return ResponseEntity.ok(new ComandaConItemsDTO(comanda, items));
     }
+
 
 
     // Agregar item a comanda (público)
