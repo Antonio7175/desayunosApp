@@ -211,17 +211,22 @@ public class ComandaController {
     
     @PutMapping("/{comandaId}/cancelar")
     public ResponseEntity<?> cancelarComanda(@PathVariable Long comandaId) {
-        // ✅ Usa el contexto de seguridad
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String email = auth.getName(); // Extraído del JWT de forma segura
+
+        if (auth == null || !auth.isAuthenticated()) {
+            System.out.println("❌ No autenticado");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No autenticado");
+        }
+
+        String email = auth.getName(); // extraído del filtro JWT
 
         Comanda comanda = comandaRepo.findById(comandaId).orElseThrow();
 
-        // 🔍 Logs opcionales de depuración
-        System.out.println("🔍 Email del SecurityContext: " + email);
+        System.out.println("🔍 Email del token: " + email);
         System.out.println("🔍 Email del admin: " + comanda.getAdmin().getEmail());
 
         if (!comanda.getAdmin().getEmail().equalsIgnoreCase(email)) {
+            System.out.println("❌ No eres el administrador");
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("No eres el administrador");
         }
 
@@ -230,6 +235,7 @@ public class ComandaController {
 
         return ResponseEntity.ok("Comanda cancelada correctamente.");
     }
+
 
 
     @DeleteMapping("/{comandaId}/item/{itemId}")
