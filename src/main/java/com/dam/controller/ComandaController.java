@@ -95,28 +95,15 @@ public class ComandaController {
 
         Comanda comanda = items.get(0).getComanda();
 
-        // 🔒 Comprobamos si está cancelada o enviada
-        if (comanda.getEstado() == EstadoComanda.CANCELADA || comanda.getEstado() == EstadoComanda.ENVIADA) {
+        // 🚫 Bloquear si ya no está activa
+        if (comanda.getEstado() == EstadoComanda.CANCELADA ||
+            comanda.getEstado() == EstadoComanda.ENVIADA) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Esta comanda ya no está disponible.");
-        }
-
-        // 🔒 Comprobamos si hay usuario autenticado
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-
-        if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) {
-            String emailUsuario = auth.getName();
-            
-            // ⚠️ Si el email NO es el del admin, no se permite acceder
-            if (!comanda.getAdmin().getEmail().equalsIgnoreCase(emailUsuario)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("No tienes permiso para ver esta comanda.");
-            }
-        } else {
-            // ❌ Si no hay login, también denegamos
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Debes iniciar sesión para acceder.");
         }
 
         return ResponseEntity.ok(new ComandaConItemsDTO(comanda, items));
     }
+
 
 
     // Agregar item a comanda (público)
