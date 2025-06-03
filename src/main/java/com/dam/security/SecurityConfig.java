@@ -32,7 +32,11 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.cors().and().csrf().disable()
             .authorizeHttpRequests(authorize -> authorize
-                .requestMatchers("/api/usuarios/login", "/api/usuarios/register").permitAll() // Permitir login y registro
+            		.requestMatchers(
+            			    "/api/usuarios/login", 
+            			    "/api/usuarios/register"
+            			).permitAll()
+            	.requestMatchers(HttpMethod.DELETE, "/api/comandas/**").hasRole("USER")
                 .requestMatchers("/uploads/**").permitAll()
                 .requestMatchers("/api/usuarios/me").authenticated() // Solo autenticados pueden acceder
                 .requestMatchers(HttpMethod.GET, "/api/bares/{barId}/menu").permitAll()

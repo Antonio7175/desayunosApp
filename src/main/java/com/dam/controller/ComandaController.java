@@ -1,14 +1,18 @@
 package com.dam.controller;
 
+import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -246,8 +250,29 @@ public class ComandaController {
         itemRepo.deleteById(itemId);
         return ResponseEntity.ok("Item eliminado");
     }
-
-
     
+
+    @GetMapping("/anteriores/admin")
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<Comanda> verHistorialCompletoParaAdmin() {
+        return comandaRepo.findAllByOrderByFechaCreacionDesc();
+    }
+    
+    @GetMapping("/anteriores/usuario")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<List<Comanda>> verHistorialUsuario() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth.getName();
+
+        Usuario usuario = usuarioRepo.findByEmail(username).orElse(null);
+        if (usuario == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        List<Comanda> comandas = comandaRepo.findByAdminOrderByFechaCreacionDesc(usuario);
+        return ResponseEntity.ok(comandas);
+    }
+
+
 }
 

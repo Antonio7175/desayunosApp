@@ -13,4 +13,8 @@ public interface ComandaRepository extends JpaRepository<Comanda, Long> {
     Optional<Comanda> findByCodigoUnico(String codigoUnico);
 
 	List<Comanda> findByBarPropietarioAndEstado(Usuario admin, EstadoComanda enviada);
+	
+	List<Comanda> findAllByOrderByFechaCreacionDesc(); // Para el ADMIN GENERAL
+	List<Comanda> findByAdminOrderByFechaCreacionDesc(Usuario admin);
+
 }

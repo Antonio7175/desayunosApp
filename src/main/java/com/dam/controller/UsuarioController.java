@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -28,6 +29,8 @@ public class UsuarioController {
     public UsuarioController(UsuarioService usuarioService) {
         this.usuarioService = usuarioService;
     }
+    
+   
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody Usuario usuario) {
         usuarioService.register(usuario);
@@ -101,9 +104,8 @@ public class UsuarioController {
         }
     
     }
-
-
     
-
 }
+
+
 
